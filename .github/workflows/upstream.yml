@@ -9,7 +9,7 @@ env:
   UPSTREAM: "https://github.com/runsidekick/sidekick-agent-nodejs"
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   UPSTREAM_BRANCH_NAME: master
-  BRANCH_NAME: auto-upstream-merge
+  BRANCH_NAME: master
   ORIGIN_PATH: runforesight-demo/sidekick-agent-nodejs
   ACTIONS_ALLOW_UNSECURE_COMMANDS: true
   GITHUB_USERNAME: runforesight-demo
@@ -26,22 +26,17 @@ jobs:
 
       - name: Sync and merge upstream repository with your current repository
         run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "github-actions@users.noreply.github.com"
+          git config --global user.name ${{ env.GITHUB_USERNAME }}
+          git config --global user.email ${{ env.GITHUB_USERNAME }}@users.noreply.github.com
+          git config pull.rebase true
+
           git remote add upstream ${{ env.UPSTREAM }}
-          git fetch upstream ${{ env.UPSTREAM_BRANCH_NAME }}:${{ env.BRANCH_NAME }}
+          # git fetch upstream ${{ env.UPSTREAM_BRANCH_NAME }}:${{ env.BRANCH_NAME }}
+
+          git pull upstream ${{ env.UPSTREAM_BRANCH_NAME }}
+
           git checkout ${{ env.BRANCH_NAME }}
-          git rm -f .github/workflows/*
-          git rm -f README.md
+          
           git remote set-url origin "https://x-access-token:${{ env.GITHUB_TOKEN }}@github.com/${{ env.ORIGIN_PATH }}"
           git commit -am "Merge upstream" || true
           git push -f -u origin ${{ env.BRANCH_NAME }}
-      - name: Install hub
-        uses: geertvdc/setup-hub@master
-
-      - name: Automatically create pull Request
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_USER: ${{ secrets.GITHUB_USER }}
-        run: |
-          hub pull-request -m "Merge upstream"  -b  ${{ env.GITHUB_USERNAME}}:${{ env.UPSTREAM_BRANCH_NAME }} -h ${{ env.GITHUB_USERNAME }}:${{ env.BRANCH_NAME }} --no-edit || true
